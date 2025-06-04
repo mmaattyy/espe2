@@ -15,47 +15,144 @@ class _VolumenPageState extends State<VolumenPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorPrimary = Theme.of(context).colorScheme.primary;
+    final colorOnSurface = Theme.of(context).colorScheme.onSurface;
+
     return Scaffold(
-      backgroundColor: Color(0xE5F6FBFF),
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        title: const Text('Volumen'),
+        title: const Text(
+          'Volumen',
+          style: TextStyle(color: Color(0xFF263238)),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          TextButton(onPressed: () {}, child: const Text("About"))
+          TextButton(
+            onPressed: () {
+              // Acción “About” pendiente
+            },
+            child: const Text("About"),
+          )
         ],
+        iconTheme: const IconThemeData(color: Color(0xFF00796B)),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: controlador,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: unidadFrom),
+              style: TextStyle(color: colorOnSurface),
+              decoration: InputDecoration(
+                labelText: unidadFrom,
+                labelStyle: TextStyle(color: const Color(0xFF546E7A)),
+                prefixIcon: Icon(Icons.invert_colors, color: colorPrimary),
+                enabledBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide(color: Color(0xFFB2DFDB)),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide(color: Color(0xFFB2DFDB), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                hintText: 'Ingrese un valor',
+                hintStyle: TextStyle(color: const Color(0xFFB0BEC5)),
+              ),
             ),
-            DropdownButton<String>(
-              value: unidadFrom,
-              items: unidades.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-              onChanged: (val) => setState(() => unidadFrom = val!),
-            ),
-            const SizedBox(height: 20),
-            const Icon(Icons.arrow_downward),
-            const SizedBox(height: 20),
-            DropdownButton<String>(
-              value: unidadTo,
-              items: unidades.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-              onChanged: (val) => setState(() => unidadTo = val!),
-            ),
-            const SizedBox(height: 8),
-            const Text('A', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 16),
-            const Text('Fórmula:', style: TextStyle(fontSize: 16)),
+            Text(
+              'Desde:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFB2DFDB)),
+              ),
+              child: DropdownButton<String>(
+                value: unidadFrom,
+                isExpanded: true,
+                underline: const SizedBox(),
+                icon: Icon(Icons.keyboard_arrow_down, color: colorPrimary),
+                items: unidades
+                    .map((u) => DropdownMenuItem(
+                  value: u,
+                  child: Text(u, style: TextStyle(color: colorOnSurface)),
+                ))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    unidadFrom = val!;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Icon(
+                Icons.arrow_downward,
+                size: 32,
+                color: const Color(0xFFB0BEC5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Hasta:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFB2DFDB)),
+              ),
+              child: DropdownButton<String>(
+                value: unidadTo,
+                isExpanded: true,
+                underline: const SizedBox(),
+                icon: Icon(Icons.keyboard_arrow_down, color: colorPrimary),
+                items: unidades
+                    .map((u) => DropdownMenuItem(
+                  value: u,
+                  child: Text(u, style: TextStyle(color: colorOnSurface)),
+                ))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    unidadTo = val!;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'A',
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Fórmula:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const Spacer(),
-            ElevatedButton(
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Atras')
-            )
+                child: const Text('Atrás'),
+              ),
+            ),
           ],
         ),
       ),
