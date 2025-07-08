@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class VolumenPage extends StatefulWidget {
   const VolumenPage({super.key});
@@ -12,6 +14,68 @@ class _VolumenPageState extends State<VolumenPage> {
   String unidadTo = 'Litro';
   final unidades = ['Mililitro', 'Litro', 'Galón'];
   final controlador = TextEditingController();
+
+  String? resultado;
+  bool cargando = false;
+  String? error;
+
+  Future<void> convertir() async {
+    final valorTexto = controlador.text;
+    if (valorTexto.isEmpty) {
+      setState(() {
+        error = 'Ingrese un valor para convertir.';
+        resultado = null;
+      });
+      return;
+    }
+
+    double? valorNum = double.tryParse(valorTexto);
+    if (valorNum == null) {
+      setState(() {
+        error = 'Ingrese un valor numérico válido.';
+        resultado = null;
+      });
+      return;
+    }
+
+    setState(() {
+      cargando = true;
+      error = null;
+      resultado = null;
+    });
+
+    try {
+      final uri = Uri.parse('http://10.0.2.2:3000/conversor/convert');  // Aquí la IP para Android emulador
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'tipo': 'Volumen',
+          'valor': valorNum,
+          'unidadOrigen': unidadFrom,
+          'unidadDestino': unidadTo,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          resultado = data['resultado'].toString();
+          cargando = false;
+        });
+      } else {
+        setState(() {
+          error = 'Error en la conversión: ${response.body}';
+          cargando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = 'Error al conectar con el servidor.';
+        cargando = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,16 +199,41 @@ class _VolumenPageState extends State<VolumenPage> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'A',
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
+
+            // Botón para convertir
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: cargando ? null : convertir,
+                child: cargando
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Text('Convertir'),
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Fórmula:',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+
+            const SizedBox(height: 24),
+
+            // Mostrar resultado o error
+            if (resultado != null)
+              Text(
+                'Resultado: $resultado $unidadTo',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium
+                    ?.copyWith(color: colorPrimary),
+                textAlign: TextAlign.center,
+              ),
+            if (error != null)
+              Text(
+                error!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+
             const Spacer(),
             SizedBox(
               width: double.infinity,
