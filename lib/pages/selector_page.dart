@@ -15,9 +15,6 @@ class SelectorPage extends StatelessWidget {
     final colorSecondary = Theme.of(context).colorScheme.secondary;
 
     final options = [
-      _OptionData('Moneda', Icons.attach_money, () {
-        // Navegación pendiente para Moneda
-      }),
       _OptionData('Volumen', Icons.local_drink, () {
         Navigator.push(
           context,
@@ -29,9 +26,6 @@ class SelectorPage extends StatelessWidget {
           context,
           MaterialPageRoute(builder: (_) => const TemperaturaPage()),
         );
-      }),
-      _OptionData('UF', Icons.swap_horiz, () {
-        // Navegación pendiente para UF
       }),
       _OptionData('Métrica', Icons.straighten, () {
         Navigator.push(
@@ -51,14 +45,6 @@ class SelectorPage extends StatelessWidget {
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         title: const Text('Selector de Unidades'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // Acción “About” pendiente
-            },
-            child: const Text("About"),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
