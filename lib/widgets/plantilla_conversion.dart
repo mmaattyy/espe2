@@ -3,17 +3,17 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class PlantillaConversion extends StatefulWidget {
-  final String titulo;
+  final String tipoConversion;
   final List<String> unidades;
   final IconData icono;
-  final String tipoConversion;
+  final String titulo;
 
   const PlantillaConversion({
     super.key,
-    required this.titulo,
+    required this.tipoConversion,
     required this.unidades,
     required this.icono,
-    required this.tipoConversion,
+    required this.titulo,
   });
 
   @override
@@ -21,8 +21,8 @@ class PlantillaConversion extends StatefulWidget {
 }
 
 class _PlantillaConversionState extends State<PlantillaConversion> {
-  late String unidadFrom;
-  late String unidadTo;
+  String unidadFrom = '';
+  String unidadTo = '';
   final controlador = TextEditingController();
 
   String? resultado;
@@ -32,12 +32,13 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
   @override
   void initState() {
     super.initState();
-    unidadFrom = widget.unidades.first;
-    unidadTo = widget.unidades.length > 1 ? widget.unidades[1] : widget.unidades.first;
+    unidadFrom = widget.unidades[0];
+    unidadTo = widget.unidades[1];
   }
 
   Future<void> convertir() async {
-    final valorTexto = controlador.text;
+    final valorTexto = controlador.text.replaceAll(',', '.'); // soporta coma
+
     if (valorTexto.isEmpty) {
       setState(() {
         error = 'Ingrese un valor para convertir.';
@@ -46,10 +47,18 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
       return;
     }
 
+    if (unidadFrom == unidadTo) {
+      setState(() {
+        error = 'Las unidades no pueden ser iguales.';
+        resultado = null;
+      });
+      return;
+    }
+
     final valorNum = double.tryParse(valorTexto);
     if (valorNum == null) {
       setState(() {
-        error = 'Ingrese un valor numérico válido.';
+        error = 'Ingrese un número válido.';
         resultado = null;
       });
       return;
@@ -62,7 +71,7 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
     });
 
     try {
-      final uri = Uri.parse('http://10.0.2.2:3000/conversor/convert'); // Cambia si usas otro host
+      final uri = Uri.parse('http://10.0.2.2:3000/conversor/convert');
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -76,8 +85,24 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final resultadoValor = data['resultado'].toString();
+
+        // Guardar en historial
+        final uriHistorial = Uri.parse('http://10.0.2.2:3000/historial');
+        await http.post(
+          uriHistorial,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'tipo': widget.tipoConversion,
+            'valor_original': valorNum.toString(),
+            'unidad_origen': unidadFrom,
+            'unidad_destino': unidadTo,
+            'resultado': resultadoValor,
+          }),
+        );
+
         setState(() {
-          resultado = data['resultado'].toString();
+          resultado = resultadoValor;
           cargando = false;
         });
       } else {
@@ -86,46 +111,12 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
           cargando = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
       setState(() {
         error = 'Error al conectar con el servidor.';
         cargando = false;
       });
     }
-  }
-
-  Widget _buildDropdown(String label, String currentValue, ValueChanged<String?> onChanged) {
-    final colorPrimary = Theme.of(context).colorScheme.primary;
-    final colorOnSurface = Theme.of(context).colorScheme.onSurface;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFB2DFDB)),
-          ),
-          child: DropdownButton<String>(
-            value: currentValue,
-            isExpanded: true,
-            underline: const SizedBox(),
-            icon: Icon(Icons.keyboard_arrow_down, color: colorPrimary),
-            items: widget.unidades
-                .map((u) => DropdownMenuItem(
-              value: u,
-              child: Text(u, style: TextStyle(color: colorOnSurface)),
-            ))
-                .toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    );
   }
 
   @override
@@ -134,19 +125,10 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
     final colorOnSurface = Theme.of(context).colorScheme.onSurface;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        title: Text(widget.titulo, style: const TextStyle(color: Color(0xFF263238))),
+        title: Text(widget.titulo),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: () {
-              // Acción “About” pendiente
-            },
-            child: const Text("About"),
-          )
-        ],
         iconTheme: const IconThemeData(color: Color(0xFF00796B)),
       ),
       body: Padding(
@@ -156,11 +138,10 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
           children: [
             TextField(
               controller: controlador,
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.text,
               style: TextStyle(color: colorOnSurface),
               decoration: InputDecoration(
                 labelText: unidadFrom,
-                labelStyle: const TextStyle(color: Color(0xFF546E7A)),
                 prefixIcon: Icon(widget.icono, color: colorPrimary),
                 enabledBorder: const OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -172,45 +153,41 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
                 ),
                 filled: true,
                 fillColor: Colors.white,
-                hintText: 'Ingrese un valor',
+                hintText: 'Ej: 12,5 o 12.5',
                 hintStyle: const TextStyle(color: Color(0xFFB0BEC5)),
               ),
             ),
             const SizedBox(height: 16),
-            _buildDropdown('Desde:', unidadFrom, (val) {
+            Text('Desde:', style: Theme.of(context).textTheme.bodyMedium),
+            _buildDropdown(unidadFrom, (val) {
               setState(() {
                 unidadFrom = val!;
               });
             }),
             const SizedBox(height: 24),
-            const Center(
-              child: Icon(Icons.arrow_downward, size: 32, color: Color(0xFFB0BEC5)),
-            ),
+            Center(child: Icon(Icons.arrow_downward, size: 32, color: Colors.grey)),
             const SizedBox(height: 24),
-            _buildDropdown('Hasta:', unidadTo, (val) {
+            Text('Hasta:', style: Theme.of(context).textTheme.bodyMedium),
+            _buildDropdown(unidadTo, (val) {
               setState(() {
                 unidadTo = val!;
               });
             }),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: cargando ? null : convertir,
                 child: cargando
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Text('Convertir'),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             if (resultado != null)
               Text(
                 'Resultado: $resultado $unidadTo',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: colorPrimary),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: colorPrimary),
                 textAlign: TextAlign.center,
               ),
             if (error != null)
@@ -220,15 +197,33 @@ class _PlantillaConversionState extends State<PlantillaConversion> {
                 textAlign: TextAlign.center,
               ),
             const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Atrás'),
-              ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Atrás'),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String value, ValueChanged<String?> onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB2DFDB)),
+      ),
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        underline: const SizedBox(),
+        icon: const Icon(Icons.keyboard_arrow_down),
+        items: widget.unidades.map((u) {
+          return DropdownMenuItem(value: u, child: Text(u));
+        }).toList(),
+        onChanged: onChanged,
       ),
     );
   }

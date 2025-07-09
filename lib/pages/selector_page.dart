@@ -1,45 +1,25 @@
 import 'package:flutter/material.dart';
 import 'temperatura_page.dart';
 import 'volumen_page.dart';
+import 'historial_page.dart'; // Asegúrate de tener esta vista creada
 
 class SelectorPage extends StatelessWidget {
   const SelectorPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final colorPrimary = Theme.of(context).colorScheme.primary;
-    final colorOnSurface = Theme.of(context).colorScheme.onSurface;
-    final colorSecondary = Theme.of(context).colorScheme.secondary;
-
-    final options = [
-      _OptionData('Moneda', Icons.attach_money, () {
-        // Navegación pendiente para Moneda
-      }),
-      _OptionData('Volumen', Icons.local_drink, () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const VolumenPage()),
-        );
-      }),
-      _OptionData('Temperatura', Icons.thermostat, () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const TemperaturaPage()),
-        );
-      }),
-      _OptionData('UF', Icons.swap_horiz, () {
-        // Navegación pendiente para UF
-      }),
-      _OptionData('Métrica', Icons.straighten, () {
-        // Navegación pendiente para Métrica
-      }),
-      _OptionData('Velocidad', Icons.speed, () {
-        // Navegación pendiente para Velocidad
-      }),
+    final theme = Theme.of(context);
+    final opciones = [
+      _Opcion('Moneda', Icons.attach_money, null),
+      _Opcion('Volumen', Icons.local_drink, const VolumenPage()),
+      _Opcion('Temperatura', Icons.thermostat, const TemperaturaPage()),
+      _Opcion('UF', Icons.swap_horiz, null),
+      _Opcion('Métrica', Icons.straighten, null),
+      _Opcion('Velocidad', Icons.speed, null),
     ];
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         title: const Text('Selector de Unidades'),
         actions: [
@@ -57,33 +37,34 @@ class SelectorPage extends StatelessWidget {
           children: [
             Text(
               '¿Qué desea convertir?',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: theme.textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              childAspectRatio: 1.2,
+            GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              children: options.map((opt) {
-                return _buildCard(
-                  context,
-                  opt,
-                  colorPrimary,
-                  colorOnSurface,
-                  colorSecondary,
-                );
-              }).toList(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: opciones.length,
+              itemBuilder: (context, index) {
+                final opt = opciones[index];
+                return _OpcionCard(opcion: opt);
+              },
             ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Ver Historial pendiente
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HistorialPage()),
+                  );
                 },
                 icon: const Icon(Icons.history),
                 label: const Text('Ver Historial'),
@@ -94,41 +75,53 @@ class SelectorPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildCard(
-      BuildContext context,
-      _OptionData data,
-      Color colorPrimary,
-      Color textColor,
-      Color splashColor,
-      ) {
+class _Opcion {
+  final String nombre;
+  final IconData icono;
+  final Widget? destino;
+
+  const _Opcion(this.nombre, this.icono, this.destino);
+}
+
+class _OpcionCard extends StatelessWidget {
+  final _Opcion opcion;
+
+  const _OpcionCard({required this.opcion});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Material(
-      color: Theme.of(context).colorScheme.surface,
+      color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
       elevation: 3,
       shadowColor: Colors.black.withOpacity(0.12),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: data.onTap,
-        splashColor: splashColor.withOpacity(0.2),
-        highlightColor: splashColor.withOpacity(0.1),
+        splashColor: theme.colorScheme.secondary.withOpacity(0.2),
+        highlightColor: theme.colorScheme.secondary.withOpacity(0.1),
+        onTap: opcion.destino != null
+            ? () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => opcion.destino!),
+        )
+            : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                data.icon,
-                size: 48,
-                color: colorPrimary,
-              ),
+              Icon(opcion.icono, size: 48, color: theme.colorScheme.primary),
               const SizedBox(height: 16),
               Text(
-                data.label,
+                opcion.nombre,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: textColor,
+                  color: theme.colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -138,12 +131,4 @@ class SelectorPage extends StatelessWidget {
       ),
     );
   }
-}
-
-class _OptionData {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  _OptionData(this.label, this.icon, this.onTap);
 }
