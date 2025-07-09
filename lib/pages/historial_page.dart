@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 
 class HistorialPage extends StatefulWidget {
@@ -13,6 +14,12 @@ class _HistorialPageState extends State<HistorialPage> {
   List<dynamic> historial = [];
   bool cargando = true;
   String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    obtenerHistorial();
+  }
 
   Future<void> obtenerHistorial() async {
     setState(() {
@@ -76,10 +83,14 @@ class _HistorialPageState extends State<HistorialPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    obtenerHistorial();
+  String formatearFecha(String fechaStr) {
+    try {
+      final fecha = DateTime.parse(fechaStr);
+      final formato = DateFormat('dd/MM/yyyy HH:mm');
+      return formato.format(fecha);
+    } catch (e) {
+      return fechaStr;
+    }
   }
 
   @override
@@ -138,7 +149,7 @@ class _HistorialPageState extends State<HistorialPage> {
                   '${item['valor_original']} ${item['unidad_origen']} → ${item['resultado']} ${item['unidad_destino']}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text('${item['tipo']} | ${item['fecha']}'),
+                subtitle: Text('${item['tipo']} | ${formatearFecha(item['fecha'])}'),
               ),
             );
           },
