@@ -8,8 +8,7 @@ class VolumenPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const PlantillaConversion(
       titulo: 'Volumen',
-      unidades: ['Mililitro', 'Litro', 'Galón'],
-      icono: Icons.invert_colors,
+      icono: Icons.local_drink,
       tipoConversion: 'Volumen',
     );
   }

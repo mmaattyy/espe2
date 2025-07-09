@@ -1,25 +1,54 @@
 import 'package:flutter/material.dart';
 import 'temperatura_page.dart';
 import 'volumen_page.dart';
-import 'historial_page.dart'; // Asegúrate de tener esta vista creada
+import 'metrica_page.dart';
+import 'velocidad_page.dart';
+import 'historial_page.dart';
 
 class SelectorPage extends StatelessWidget {
   const SelectorPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final opciones = [
-      _Opcion('Moneda', Icons.attach_money, null),
-      _Opcion('Volumen', Icons.local_drink, const VolumenPage()),
-      _Opcion('Temperatura', Icons.thermostat, const TemperaturaPage()),
-      _Opcion('UF', Icons.swap_horiz, null),
-      _Opcion('Métrica', Icons.straighten, null),
-      _Opcion('Velocidad', Icons.speed, null),
+    final colorPrimary = Theme.of(context).colorScheme.primary;
+    final colorOnSurface = Theme.of(context).colorScheme.onSurface;
+    final colorSecondary = Theme.of(context).colorScheme.secondary;
+
+    final options = [
+      _OptionData('Moneda', Icons.attach_money, () {
+        // Navegación pendiente para Moneda
+      }),
+      _OptionData('Volumen', Icons.local_drink, () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VolumenPage()),
+        );
+      }),
+      _OptionData('Temperatura', Icons.thermostat, () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TemperaturaPage()),
+        );
+      }),
+      _OptionData('UF', Icons.swap_horiz, () {
+        // Navegación pendiente para UF
+      }),
+      _OptionData('Métrica', Icons.straighten, () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MetricaPage()),
+        );
+      }),
+      _OptionData('Velocidad', Icons.speed, () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VelocidadPage()),
+        );
+      }),
     ];
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         title: const Text('Selector de Unidades'),
         actions: [
@@ -37,24 +66,26 @@ class SelectorPage extends StatelessWidget {
           children: [
             Text(
               '¿Qué desea convertir?',
-              style: theme.textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            GridView.builder(
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              childAspectRatio: 1.2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-                childAspectRatio: 1.2,
-              ),
-              itemCount: opciones.length,
-              itemBuilder: (context, index) {
-                final opt = opciones[index];
-                return _OpcionCard(opcion: opt);
-              },
+              children: options.map((opt) {
+                return _buildCard(
+                  context,
+                  opt,
+                  colorPrimary,
+                  colorOnSurface,
+                  colorSecondary,
+                );
+              }).toList(),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -75,53 +106,41 @@ class SelectorPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class _Opcion {
-  final String nombre;
-  final IconData icono;
-  final Widget? destino;
-
-  const _Opcion(this.nombre, this.icono, this.destino);
-}
-
-class _OpcionCard extends StatelessWidget {
-  final _Opcion opcion;
-
-  const _OpcionCard({required this.opcion});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
+  Widget _buildCard(
+      BuildContext context,
+      _OptionData data,
+      Color colorPrimary,
+      Color textColor,
+      Color splashColor,
+      ) {
     return Material(
-      color: theme.colorScheme.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
       elevation: 3,
       shadowColor: Colors.black.withOpacity(0.12),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        splashColor: theme.colorScheme.secondary.withOpacity(0.2),
-        highlightColor: theme.colorScheme.secondary.withOpacity(0.1),
-        onTap: opcion.destino != null
-            ? () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => opcion.destino!),
-        )
-            : null,
+        onTap: data.onTap,
+        splashColor: splashColor.withOpacity(0.2),
+        highlightColor: splashColor.withOpacity(0.1),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(opcion.icono, size: 48, color: theme.colorScheme.primary),
+              Icon(
+                data.icon,
+                size: 48,
+                color: colorPrimary,
+              ),
               const SizedBox(height: 16),
               Text(
-                opcion.nombre,
+                data.label,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
+                  color: textColor,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -131,4 +150,12 @@ class _OpcionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _OptionData {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  _OptionData(this.label, this.icon, this.onTap);
 }

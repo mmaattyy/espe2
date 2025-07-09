@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ✅ cambio aquí
+const pool = require('../db');
 
-// Guardar una conversión en historial
 router.post('/', async (req, res) => {
     const { tipo, valor_original, unidad_origen, unidad_destino, resultado } = req.body;
     if (!tipo || !valor_original || !unidad_origen || !unidad_destino || !resultado) {
@@ -22,7 +21,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Obtener historial completo
 router.get('/', async (req, res) => {
     try {
         const [rows] = await pool.execute('SELECT * FROM historial ORDER BY fecha DESC');
@@ -30,6 +28,16 @@ router.get('/', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener historial' });
+    }
+});
+
+router.delete('/', async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM historial');
+        res.json({ message: 'Historial borrado correctamente' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al borrar historial' });
     }
 });
 

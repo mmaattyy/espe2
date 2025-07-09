@@ -44,6 +44,38 @@ class _HistorialPageState extends State<HistorialPage> {
     }
   }
 
+  Future<void> borrarHistorial() async {
+    setState(() {
+      cargando = true;
+      error = null;
+    });
+
+    try {
+      final uri = Uri.parse('http://10.0.2.2:3000/historial');
+      final response = await http.delete(uri);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          historial.clear();
+          cargando = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Historial borrado correctamente')),
+        );
+      } else {
+        setState(() {
+          error = 'Error al borrar historial: ${response.body}';
+          cargando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = 'No se pudo conectar al servidor.';
+        cargando = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +87,37 @@ class _HistorialPageState extends State<HistorialPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial de Conversiones'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'Borrar historial',
+            onPressed: historial.isEmpty || cargando
+                ? null
+                : () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Confirmar borrado'),
+                  content: const Text('¿Seguro que quieres borrar todo el historial?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Borrar'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await borrarHistorial();
+              }
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
